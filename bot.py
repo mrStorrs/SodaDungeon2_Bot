@@ -5,11 +5,11 @@ from re import template
 import cv2
 import pyautogui
 import os
+import numpy as np
 from time import sleep
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
-loot_index = 0; 
 
 #could set a "last action to move back if no new aciton is found."
 actions = {
@@ -61,7 +61,7 @@ x, y, w, h = 5, 30, 1920, 1083
 sleep(2)
 
 #functions
-def findLocationToClick(template, image_gray, screen, key, loot_index ):
+def findLocationToClick(template, image_gray, screen, key):
         result = cv2.matchTemplate(
             image_gray,
             template.match_gray,
@@ -72,6 +72,8 @@ def findLocationToClick(template, image_gray, screen, key, loot_index ):
 
         #threshold
         if max_val >= 0.9:
+            sleep(0.1)
+
             if key is "sky":
                 pyautogui.press('Escape')
             if key is "exit":
@@ -103,11 +105,10 @@ def findLocationToClick(template, image_gray, screen, key, loot_index ):
                 pyautogui.press('Escape')
 
             if key is "exit2": #reset keys
-                pyautogui.screenshot("imgsLoot/" + template.loot_index + ".png", (x, y, w, h))
+                pyautogui.screenshot("imgsLoot/" + str(template.loot_index) + ".png", (x, y, w, h))
                 template.loot_index += 1
                 for key in actions:
                     actions[key] = False
-                return loot_index
 
         elif key is "exit":
             pyautogui.press('Escape')
@@ -118,9 +119,10 @@ def findLocationToClick(template, image_gray, screen, key, loot_index ):
 while True:
 
     #screenshot
-    pyautogui.screenshot("imgs/screen.png", (x, y, w, h))
-    screen = cv2.imread("imgs/screen.png")
-    print ("Entering outer loop")
+    screen = pyautogui.screenshot()
+    screen = cv2.cvtColor(np.array(screen), cv2.COLOR_RGB2BGR)
+    # screen = cv2.imread(screen)
+    print ("#--------------------------#")
 
     # while True:
 
@@ -143,7 +145,7 @@ while True:
             if key is "partyStand":
                 findLocationToClick(match_partyStand, image_gray, screen, key)
             if key is "partyHire":
-                sleep(0.2)
+                # sleep(0.2)
                 findLocationToClick(match_partyHire, image_gray, screen, key)
             if key is "partyHired":
                 findLocationToClick(match_partyHired, image_gray, screen, key)
@@ -162,7 +164,7 @@ while True:
             if key is "exitYes":
                 findLocationToClick(match_exitYes, image_gray, screen, key)
             if key is "exit2":
-                sleep(1)
+                # sleep(1)
                 findLocationToClick(match_exit, image_gray, screen, key)
                 #reset keys to start over
             break
