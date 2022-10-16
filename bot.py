@@ -6,7 +6,12 @@ import cv2
 import pyautogui
 import os
 import numpy as np
+import time
 from time import sleep
+import logging
+
+startTime = time.time()
+
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
@@ -29,6 +34,8 @@ actions = {
     "exitYes" : False,  
     "exit2" : False,  
 }
+# logging.basicConfig(filename='app.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(filename="sodaLogs/log.log", filemode="w", format='%(asctime)s - %(message)s', level=logging.INFO)
 
 #No cooldown time
 pyautogui.PAUSE = 0
@@ -84,7 +91,6 @@ def findLocationToClick(template, image_gray, screen, key):
 
             if key is "exit2": #take screen of loot
                 pyautogui.screenshot("imgsLoot/" + str(template.loot_index) + ".png", (x, y, w, h))
-                template.loot_index += 1
 
             if key is "sky":
                 pyautogui.press('Escape')
@@ -112,7 +118,7 @@ def findLocationToClick(template, image_gray, screen, key):
             # actions[key] = True
             if key is "sky":
                 actions[key] = True
-                print ("Confirm Step: sky : Success")
+                logMsg("Confirm Step: sky : Success")
             else: 
                 checkIfStepComplete(template, key)
 
@@ -121,10 +127,23 @@ def findLocationToClick(template, image_gray, screen, key):
                 sleep(0.5) 
                 pyautogui.press('Escape')
 
-            if key is "exit2" and actions[key] is True: #reset 
+            if key is "exit2" and actions[key] is True: #reset
+                #caluclate various time stats.
+                currentTime = time.time()
+                floorsCleared = template.loot_index * 21
+                floorsPerSecond = float(floorsCleared / (currentTime - startTime))
+                floorsPerHour = floorsPerSecond * 60.0 * 60.0
+                template.loot_index += 1 #increment the loot index.
+
                 for key in actions:
-                    actions[key] = False
-                print ("#----------- Run: " + str(template.loot_index) +" -----------")
+                    actions[key] = False #reset all phases to false
+                
+                #log messages to console and logfile
+                logMsg("#-- Run: " + str(template.loot_index) +" --#")
+                logMsg("#-- Time: " + time.ctime() +" --#")
+                logMsg("#-- ~FloorsCleared: " + str(floorsCleared) +" --#")
+                logMsg("#-- ~FPH: " + str(floorsPerHour) +" --#")
+                logMsg("#-- ~JPH: " + str(floorsPerHour / 21) +" --#")
 
 
         elif key is "exit":
@@ -150,33 +169,38 @@ def checkIfStepComplete(template, key):
 
     image_gray = cv2.cvtColor(screen, cv2.COLOR_RGB2GRAY)
 
-    if key is "arrow":
-        result = cv2.matchTemplate(
-            image_gray,
-            match_floorNum.match_gray,
-            cv2.TM_CCOEFF_NORMED
-        )
+    # if key is "arrow":
+    #     result = cv2.matchTemplate(
+    #         image_gray,
+    #         match_floorNum.match_gray,
+    #         cv2.TM_CCOEFF_NORMED
+    #     )
 
-    else:     
-        result = cv2.matchTemplate(
-            image_gray,
-            template.match_gray,
-            cv2.TM_CCOEFF_NORMED
-        )
+    # else:     
+    result = cv2.matchTemplate(
+        image_gray,
+        template.match_gray,
+        cv2.TM_CCOEFF_NORMED
+    )
 
     min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
 
     #threshold check to see if the image no longer matches.
     if max_val <= 0.9:
-        print ("Confirm Step: " + key +  " : Success")
+        logMsg("Confirm Step: " + key +  " : Success")
         actions[key] = True
         sleep(0.1)
 
     else: 
-        print ("Confirm Step: " + key + " : Failure")
+        logMsg("Confirm Step: " + key + " : Failure")
 
 def close():
     main.run = False
+
+def logMsg(message):
+    logging.info(message)
+    print(message)
+
 
 #main
 while main.run:
@@ -199,7 +223,7 @@ while main.run:
     image_gray = cv2.cvtColor(screen, cv2.COLOR_RGB2GRAY)
 
     for key in actions:
-        # print (key + " : " + str(actions[key]))
+        # logMsg(key + " : " + str(actions[key]))
 
         if not actions[key]:
             if key is "enterInn":
