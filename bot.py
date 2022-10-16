@@ -11,7 +11,7 @@ from time import sleep
 import logging
 
 startTime = time.time()
-
+partyLoadoutNum = 1 #set this to the loadout number you want the party to use.
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
@@ -22,6 +22,7 @@ cv2.destroyAllWindows()
 actions = {
     "enterInn": False,
     "partyStand": False,
+    "partyChange": False, 
     "partyHire" : False,  
     "partyHired" : False,  
     "dungeon" : False,  
@@ -55,6 +56,7 @@ class Image:
 #template and dimensions
 match_inn = Image("imgs/inn.png")
 match_partyStand = Image("imgs/partyStand.png")
+match_partyChange = Image("imgs/partyChange.png")
 match_partyHire = Image("imgs/partyHire.png")
 match_partyHired = Image("imgs/partyHired.png")
 match_Dungeon = Image("imgs/dungeon.png")
@@ -87,7 +89,7 @@ def findLocationToClick(template, image_gray, screen, key):
 
         #threshold
         if max_val >= 0.85:
-            sleep(0.1)
+            sleep(0.05)
 
             if key is "exit2": #take screen of loot
                 pyautogui.screenshot("imgsLoot/" + str(template.loot_index) + ".png", (x, y, w, h))
@@ -124,7 +126,7 @@ def findLocationToClick(template, image_gray, screen, key):
 
             if key is "partyHired":
                 pyautogui.press('Escape')
-                sleep(0.5) 
+                sleep(0.05) 
                 pyautogui.press('Escape')
 
             if key is "exit2" and actions[key] is True: #reset
@@ -148,13 +150,13 @@ def findLocationToClick(template, image_gray, screen, key):
 
         elif key is "exit":
             pyautogui.press('Escape')
-            sleep(0.2)
+            sleep(0.05)
             findLocationToClick(match_exitContinue, image_gray, screen, "exitContinue")
 
 
 #functions
 def checkIfStepComplete(template, key):
-    sleep(0.2)
+    sleep(0.1)
     screen = pyautogui.screenshot()
     screen = cv2.cvtColor(np.array(screen), cv2.COLOR_RGB2BGR)
     # screen = cv2.imread(screen)
@@ -189,7 +191,7 @@ def checkIfStepComplete(template, key):
     if max_val <= 0.9:
         logMsg("Confirm Step: " + key +  " : Success")
         actions[key] = True
-        sleep(0.1)
+        sleep(0.05)
 
     else: 
         logMsg("Confirm Step: " + key + " : Failure")
@@ -230,6 +232,12 @@ while main.run:
                 findLocationToClick(match_inn, image_gray, screen, key)
             if key is "partyStand":
                 findLocationToClick(match_partyStand, image_gray, screen, key)
+            if key is "partyChange":
+                if partyLoadoutNum is 1:
+                    actions[key] = True
+                else: 
+                    for i in range(partyLoadoutNum - 1):
+                        findLocationToClick(match_partyChange, image_gray, screen, key)
             if key is "partyHire":
                 # sleep(0.2)
                 findLocationToClick(match_partyHire, image_gray, screen, key)
