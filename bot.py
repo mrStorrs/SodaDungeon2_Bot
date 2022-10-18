@@ -14,10 +14,16 @@ startTime = time.time()
 partyLoadoutNum = 1 #set this to the loadout number you want the party to use.
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
+cv2.destroyAllWindows()  #destroy any leftover windows from previous sessions.
+#logging config
+                              
+logging.basicConfig(
+    filename="sodaLogs/log.log",
+    filemode="w",
+    format='%(asctime)s - %(message)s',
+    datefmt='%m-%d %H:%M',
+    level=logging.INFO)
 
-
-
-cv2.destroyAllWindows()  
 #could set a "last action to move back if no new aciton is found."
 actions = {
     "enterInn": False,
@@ -35,8 +41,8 @@ actions = {
     "exitYes" : False,  
     "exit2" : False,  
 }
+
 # logging.basicConfig(filename='app.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s')
-logging.basicConfig(filename="sodaLogs/log.log", filemode="w", format='%(asctime)s - %(message)s', level=logging.INFO)
 
 #No cooldown time
 pyautogui.PAUSE = 0
@@ -120,7 +126,7 @@ def findLocationToClick(template, image_gray, screen, key):
             # actions[key] = True
             if key is "sky":
                 actions[key] = True
-                logMsg("Confirm Step: sky : Success")
+                # logMsg("Confirm Step: sky : Success")
             else: 
                 checkIfStepComplete(template, key)
 
@@ -135,17 +141,23 @@ def findLocationToClick(template, image_gray, screen, key):
                 floorsCleared = template.loot_index * 21
                 floorsPerSecond = float(floorsCleared / (currentTime - startTime))
                 floorsPerHour = floorsPerSecond * 60.0 * 60.0
-                template.loot_index += 1 #increment the loot index.
 
                 for key in actions:
                     actions[key] = False #reset all phases to false
                 
                 #log messages to console and logfile
-                logMsg("#-- Run: " + str(template.loot_index) +" --#")
-                logMsg("#-- Time: " + time.ctime() +" --#")
-                logMsg("#-- ~FloorsCleared: " + str(floorsCleared) +" --#")
-                logMsg("#-- ~FPH: " + str(floorsPerHour) +" --#")
-                logMsg("#-- ~JPH: " + str(floorsPerHour / 21) +" --#")
+                # line1 = "|{:<11} {:>6} | {:<8} {:>8}|".format("Run Number:", str(template.loot_index), "Floors:", str(floorsCleared))
+                # line2 = "|{:<11} {:>6} | {:<8} {:>8}|".format("FPH:", str(int(floorsPerHour)), "JPH:", str(int(floorsPerHour / 21)))
+                # logMsg(line1.replace(" ", "-"))
+                # logMsg(line2.replace(" ", "-"))
+                logMsg(
+                    "run: " + str(template.loot_index)
+                    + " | floors: " + str(floorsCleared)
+                    + " | fph: " + str(int(floorsPerHour))
+                    + " | jph: " + str(int(floorsPerHour / 21))
+                )
+     
+                template.loot_index += 1 #increment the loot index.
 
 
         elif key is "exit":
@@ -159,15 +171,6 @@ def checkIfStepComplete(template, key):
     sleep(0.1)
     screen = pyautogui.screenshot()
     screen = cv2.cvtColor(np.array(screen), cv2.COLOR_RGB2BGR)
-    # screen = cv2.imread(screen)
-
-    #show what the computer sees
-    # image_mini = cv2.resize(
-    #     src = screen,
-    #     dsize = (450,350) #must be integer, not float
-    # )
-    # cv2.imshow("vision", image_mini)
-    # cv2.waitKey(10)
 
     image_gray = cv2.cvtColor(screen, cv2.COLOR_RGB2GRAY)
 
@@ -189,22 +192,24 @@ def checkIfStepComplete(template, key):
 
     #threshold check to see if the image no longer matches.
     if max_val <= 0.9:
-        logMsg("Confirm Step: " + key +  " : Success")
+        # logMsg("Confirm Step: " + key +  " : Success")
         actions[key] = True
         sleep(0.05)
 
     else: 
-        logMsg("Confirm Step: " + key + " : Failure")
+        logMsg(key + " : Failure")
 
 def close():
     main.run = False
 
 def logMsg(message):
     logging.info(message)
-    print(message)
+    print( message)
 
 
 #main
+logMsg("Initializing Soda drinking bot.")
+logMsg("#--------------------------------------#")
 while main.run:
     #screenshot
     screen = pyautogui.screenshot()
